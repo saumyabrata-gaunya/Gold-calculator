@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gold Calculator</title>
+
+<style>
+body {
+  font-family: Arial, sans-serif;
+  background: #f4f4f4;
+  padding: 20px;
+}
+.card {
+  background: #fff;
+  padding: 20px;
+  border-radius: 10px;
+  max-width: 450px;
+  margin: auto;
+  box-shadow: 0 0 10px rgba(0,0,0,0.1);
+}
+h2 { text-align: center; }
+input, button {
+  width: 100%;
+  padding: 10px;
+  margin: 6px 0;
+  font-size: 16px;
+}
+button {
+  border: none;
+  font-weight: bold;
+  cursor: pointer;
+}
+.calc { background: #d4af37; }
+.clear { background: #e74c3c; color:#fff; }
+.history { background: #333; color:#fff; }
+.lang { background: #0066cc; color:#fff; }
+
+.result, .history-box {
+  margin-top: 10px;
+  background: #f9f9f9;
+  padding: 10px;
+  border-radius: 5px;
+}
+.final {
+  font-size: 20px;
+  font-weight: bold;
+  margin-top: 8px;
+}
+</style>
+</head>
+
+<body>
+
+<div class="card">
+  <button class="lang" onclick="toggleLang()">বাংলা / English</button>
+  <button class="history" onclick="toggleHistory()">HISTORY</button>
+
+  <h2 id="title">Gold Calculator</h2>
+
+  <input id="goldRate" type="number" placeholder="Gold Rate per gram">
+  <input id="making" type="number" placeholder="Making Charge per gram">
+  <input id="weight" type="number" step="0.001" placeholder="Weight (grams)">
+
+  <!-- EXTRA FIRST -->
+  <input id="extra" type="number" value="0" placeholder="Extra Charge">
+
+  <!-- GST BELOW -->
+  <input id="gst" type="number" value="3" placeholder="GST %">
+
+  <button class="calc" id="calcBtn" onclick="calculate()">CALCULATE</button>
+  <button class="clear" onclick="clearAll()">CLEAR</button>
+
+  <div class="result" id="result"></div>
+  <div class="history-box" id="historyBox" style="display:none;"></div>
+</div>
+
+<script>
+let lang = "en";
+
+const text = {
+  en: {
+    title: "Gold Calculator",
+    rate: "Gold Rate per gram",
+    making: "Making Charge per gram",
+    weight: "Weight (grams)",
+    extra: "Extra Charge",
+    gst: "GST %",
+    calc: "CALCULATE",
+    effective: "Effective Rate",
+    goldValue: "Gold Value",
+    gstAmt: "GST Amount",
+    final: "Final Amount",
+    historyEmpty: "No history yet."
+  },
+  bn: {
+    title: "সোনার হিসাব",
+    rate: "প্রতি গ্রামের সোনার দাম",
+    making: "প্রতি গ্রামের মজুরি",
+    weight: "ওজন (গ্রাম)",
+    extra: "অতিরিক্ত চার্জ",
+    gst: "জিএসটি %",
+    calc: "হিসাব করুন",
+    effective: "কার্যকর দর",
+    goldValue: "সোনার দাম",
+    gstAmt: "জিএসটি",
+    final: "মোট দাম",
+    historyEmpty: "কোনো হিসাব সংরক্ষিত নেই"
+  }
+};
+
+function toggleLang() {
+  lang = lang === "en" ? "bn" : "en";
+  title.innerText = text[lang].title;
+  goldRate.placeholder = text[lang].rate;
+  making.placeholder = text[lang].making;
+  weight.placeholder = text[lang].weight;
+  extra.placeholder = text[lang].extra;
+  gst.placeholder = text[lang].gst;
+  calcBtn.innerText = text[lang].calc;
+}
+
+function calculate() {
+  const rate = +goldRate.value || 0;
+  const makingC = +making.value || 0;
+  const wt = +weight.value || 0;
+  const extraC = +extra.value || 0;
+  const gstP = +gst.value || 0;
+
+  const effective = rate + makingC;
+  const goldVal = effective * wt;
+  const gstAmt = goldVal * gstP / 100;
+  const finalAmt = goldVal + gstAmt + extraC;
+
+  const output = `
+    ${text[lang].effective}: ₹${effective.toFixed(2)}<br>
+    ${text[lang].goldValue}: ₹${goldVal.toFixed(3)}<br>
+    ${text[lang].gstAmt}: ₹${gstAmt.toFixed(3)}<br>
+    <div class="final">${text[lang].final}: ₹${finalAmt.toFixed(3)}</div>
+  `;
+
+  result.innerHTML = output;
+  saveHistory(output);
+}
+
+function clearAll() {
+  goldRate.value = "";
+  making.value = "";
+  weight.value = "";
+  extra.value = "0";
+  gst.value = "3";
+  result.innerHTML = "";
+}
+
+function saveHistory(data) {
+  let history = JSON.parse(localStorage.getItem("goldHistory")) || [];
+  history.unshift(`<div>${new Date().toLocaleString()}<br>${data}</div><hr>`);
+  localStorage.setItem("goldHistory", JSON.stringify(history));
+}
+
+function toggleHistory() {
+  const box = historyBox;
+  if (box.style.display === "none") {
+    const history = JSON.parse(localStorage.getItem("goldHistory")) || [];
+    box.innerHTML = history.length ? history.join("") : text[lang].historyEmpty;
+    box.style.display = "block";
+  } else {
+    box.style.display = "none";
+  }
+}
+
+/* OFFLINE SUPPORT */
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.register("sw.js");
+}
+</script>
+
+</body>
+</html>
